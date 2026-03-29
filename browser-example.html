@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Parser - Браузерный пример</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .example-btn {
+            background: #2196F3;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .example-btn:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 DeepSeek Parser</h1>
+        <p>Парсер ответов DeepSeek для браузера и Node.js</p>
+
+        <h3>Вставьте ответ от DeepSeek:</h3>
+        <textarea id="input" placeholder="Вставьте JSON или текст ответа здесь..."></textarea>
+
+        <div style="margin: 10px 0;">
+            <button onclick="parseResponse()">Парсить ответ</button>
+            <button onclick="extractText()" class="example-btn">Извлечь текст</button>
+        </div>
+
+        <div>
+            <strong>Примеры:</strong><br>
+            <button onclick="loadExample('api')" class="example-btn">API Ответ</button>
+            <button onclick="loadExample('stream')" class="example-btn">SSE Поток</button>
+            <button onclick="loadExample('text')" class="example-btn">Простой текст</button>
+            <button onclick="loadExample('browser')" class="example-btn">Из браузера</button>
+        </div>
+
+        <div id="result" class="result">
+            <h3>Результат:</h3>
+            <pre id="output"></pre>
+        </div>
+    </div>
+
+    <!-- Подключаем парсер -->
+    <script src="deepseek-parser.js"></script>
+    
+    <script>
+        // Создаем экземпляр парсера
+        const parser = new DeepSeekParser();
+
+        function parseResponse() {
+            const input = document.getElementById('input').value;
+            const resultDiv = document.getElementById('result');
+            const output = document.getElementById('output');
+
+            try {
+                const parsed = parser.parseResponse(input);
+                output.textContent = JSON.stringify(parsed, null, 2);
+                resultDiv.classList.remove('error');
+                resultDiv.classList.add('show');
+            } catch (e) {
+                output.textContent = 'Ошибка: ' + e.message;
+                resultDiv.classList.add('error', 'show');
+            }
+        }
+
+        function extractText() {
+            const input = document.getElementById('input').value;
+            const resultDiv = document.getElementById('result');
+            const output = document.getElementById('output');
+
+            try {
+                const text = parser.extractText(input);
+                output.textContent = text;
+                resultDiv.classList.remove('error');
+                resultDiv.classList.add('show');
+            } catch (e) {
+                output.textContent = 'Ошибка: ' + e.message;
+                resultDiv.classList.add('error', 'show');
+            }
+        }
+
+        function loadExample(type) {
+            const textarea = document.getElementById('input');
+            
+            switch(type) {
+                case 'api':
+                    textarea.value = JSON.stringify({
+                        id: "chatcmpl-123",
+                        model: "deepseek-chat",
+                        choices: [{
+                            message: {
+                                role: "assistant",
+                                content: "Привет! Я DeepSeek. Чем могу помочь?"
+                            },
+                            finish_reason: "stop"
+                        }],
+                        usage: {
+                            prompt_tokens: 10,
+                            completion_tokens: 20,
+                            total_tokens: 30
+                        }
+                    }, null, 2);
+                    break;
+                    
+                case 'stream':
+                    textarea.value = 'data: {"choices":[{"message":{"content":"Потоковый ответ"}}]}';
+                    break;
+                    
+                case 'text':
+                    textarea.value = 'Это простой текстовый ответ без JSON';
+                    break;
+                    
+                case 'browser':
+                    textarea.value = `Копия из консоли браузера:
+                    
+{
+    "id": "chatcmpl-456",
+    "choices": [
+        {
+            "message": {
+                "content": "Ответ извлеченный из браузерной копии"
+            }
+        }
+    ]
+}
+
+Дополнительный текст`;
+                    break;
+            }
+        }
+
+        // Загрузка примера по умолчанию
+        loadExample('api');
+    </script>
+</body>
+</html>
